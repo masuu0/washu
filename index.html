@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- DN WASHU v6.19 2026-10-03: ticker shows purchased without time -->
+<!-- DN WASHU v6.20 2026-10-03: maint buy btn gray, sample ticker x10 -->
 <html lang="hi">
 <head>
 <meta charset="utf-8">
@@ -836,7 +836,7 @@ var EANIM='';function insEmo(e){var inp=document.getElementById('s_notice');if(!
 function noticeHTML(){var n=(D.cfg.notice||'').trim();return n?'<div id="notice"><span class="nico">\ud83d\udce2</span><span id="ntw"></span><span class="ncur"></span></div>':''}
 function tickHTML(){return'<div id="tick" style="display:none"><div class="tick-in"></div></div>'}
 function ago(t){var s=(Date.now()-new Date(t).getTime())/1e3;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago'}
-async function loadTick(){var el=document.getElementById('tick');if(!el||!SB_URL)return;try{var r=await fetch(SB_URL+'/rest/v1/recent_orders_public?select=buyer,product,created_at&order=created_at.desc&limit=12',{headers:{apikey:SB_KEY}});if(!r.ok)return;var rows=await r.json();if(!rows||!rows.length)return;var items=rows.filter(function(o){return o.buyer}).map(function(o){return'<span class="tick-i">\u2705 <b>'+esc(o.buyer)+'</b>&nbsp;purchased&nbsp;<b>'+esc(o.product||'a plan')+'</b></span>'}).join('');el.querySelector('.tick-in').innerHTML='<div class="tick-row">'+items+'</div><div class="tick-row">'+items+'</div>';el.style.display='block'}catch(e){}}
+async function loadTick(){var el=document.getElementById('tick');if(!el)return;try{var samp=[['A****h','MIGUL PRO IND'],['R****i','MIGUL PRO IND'],['S****n','MIGUL PRO IND'],['V****m','MIGUL PRO IND'],['K****a','MIGUL PRO IND'],['J****l','MIGUL PRO GLOBAL'],['P****k','MIGUL PRO GLOBAL'],['N****r','TROLL MODZ'],['D****p','TROLL MODZ'],['M****j','TROLL MODZ']];var items=samp.map(function(x){return'<span class="tick-i">\u2705 <b>'+x[0]+'</b>&nbsp;purchased&nbsp;<b>'+x[1]+'</b></span>'}).join('');el.querySelector('.tick-in').innerHTML='<div class="tick-row">'+items+'</div><div class="tick-row">'+items+'</div>';el.style.display='block'}catch(e){}}
 function skelHTML(){var c='';for(var i=0;i<6;i++)c+='<div><div class="skel" style="aspect-ratio:1;border-radius:16px"></div><div class="skel" style="height:13px;border-radius:7px;margin:10px 12% 0"></div><div class="skel" style="height:11px;border-radius:6px;margin:8px 30% 0"></div></div>';return '<div class="skel" style="height:44px;border-radius:24px;margin:2px 0 14px"></div><div class="skel" style="height:150px;border-radius:20px;margin-bottom:16px"></div><div class="skel" style="height:20px;width:38%;border-radius:8px;margin:4px 0 12px"></div><div class="grid">'+c+'</div>'}
 function render(an){
  clearInterval(carT);
@@ -949,7 +949,7 @@ function upiAppLink(scheme,pa,amt,label){return scheme+'?pa='+encodeURIComponent
 function upiQR(pa,amt,note,cur){if(!pa)return '';try{if(typeof qrcode=='undefined')return '';var s='upi://pay?pa='+encodeURIComponent(pa)+'&pn='+encodeURIComponent((D.cfg.brand||'DN WASHU')+' Store')+'&am='+amt+'&cu='+(cur||'INR')+'&tn='+encodeURIComponent(note||'').slice(0,80);var q=qrcode(0,'H');q.addData(s);q.make();return '<span class="qrbox">'+q.createSvgTag({cellSize:5,margin:4,scalable:true})+'<img class="qrlogo" src="'+QRBADGE+'" alt=""></span>'}catch(e){return ''}}
 function payHTML(p,pl){
  var amt=effP(p,pl),back='<button class="chip" data-payback style="margin-top:12px">\u2190 Back</button>';
- if(payStep==0){var ok=p.st&&pl.s!==false;return'<button class="btn" data-buy style="width:100%"'+(ok?'':' disabled')+'>'+(ok?'Buy now \u2014 '+money(amt,pcur(p)):'Out of stock')+'</button>'}
+ if(payStep==0){var ok=p.st&&pl.s!==false,mnt=p.maint;return'<button class="btn" data-buy style="width:100%'+(mnt?';filter:grayscale(1);opacity:.45':'')+'"'+(ok&&!mnt?'':' disabled')+'>'+(mnt?'\uD83D\uDD27 Under maintenance':(ok?'Buy now \u2014 '+money(amt,pcur(p)):'Out of stock'))+'</button>'}
  if(payStep==1){var ms=payMethods(p),h='<h4>Choose payment method</h4>'+(!USER?'<p class="muted" style="font-size:13px;margin:0 0 10px">Tip: log in to track your orders in My Orders.</p>':'');
   if(!ms.length)h+='<p class="muted">Online payment coming soon \u2014 order directly:</p><div class="pick show">'+CHvis().map(function(c){return'<a class="btn '+c.id+'" target="_blank" rel="noopener" data-pch="'+c.id+'" href="'+esc(c.url(orderText(p,pl,nm)))+'">'+ic(c.id,22)+c.name+'</a>'}).join('')+'</div>';
   else h+='<div class="pmtiles">'+ms.map(function(x){return'<button class="pm" data-paym="'+x[0]+'">'+pmIcon(x[0])+'<b>'+x[1]+'</b><small>'+x[2]+'</small></button>'}).join('')+'</div>';
