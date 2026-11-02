@@ -101,6 +101,7 @@ body:not(.edit) #tw:empty::after{display:none}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 16px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
 .arow{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 14px;scrollbar-width:none}.arow::-webkit-scrollbar{display:none}.arow .chip{white-space:nowrap}
 .chip{flex:none;padding:9px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.08);cursor:pointer;font-size:14px;font-weight:500;transition:transform .4s var(--spring),background .3s}
+.pill,.plan{transition:transform .35s var(--spring),background .3s,border-color .3s,box-shadow .3s}
 .chip:hover{transform:scale(1.06)}.chip:active{transform:scale(.94)}
 .chip.on{background:linear-gradient(135deg,var(--magenta),var(--violet));border-color:transparent}
 /* search */
@@ -308,6 +309,16 @@ body.edit [contenteditable]{outline:1.5px dashed rgba(207,224,255,.65);outline-o
 .dash-bar{animation:barGrow .8s ease both}
 @keyframes barGrow{from{width:0}}
 .dash-row{animation:dashUp .45s ease both}
+.dash-sec{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px}
+.dash-sec h4{margin:0 0 10px}
+.dash-hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+@media(max-width:640px){.dash-hero-grid{grid-template-columns:repeat(2,1fr)}}
+.dash-hero b{font-size:26px}
+.dash-minibar{animation:barGrowY .8s ease both;transform-origin:bottom}
+@keyframes barGrowY{from{transform:scaleY(0)}}
+@keyframes drawLine{to{stroke-dashoffset:0}}
+#dashWrap.dash-done .dash-card,#dashWrap.dash-done .dash-row,#dashWrap.dash-done .dash-minibar{animation:none!important}
+#dashWrap.dash-done .dash-line{animation:none!important;stroke-dashoffset:0!important}
 #admingate{position:fixed;inset:0;z-index:300;background:rgba(4,3,10,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:grid;place-items:center;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
 #admingate.on{opacity:1;visibility:visible}
 #admingate .gate{width:min(92vw,340px);background:#12101f;border:1px solid var(--line);border-radius:18px;padding:22px}
@@ -467,7 +478,7 @@ function refreshCloudStat(){var el=document.getElementById('cloudstat');if(!el)r
 function adminConnect(){if(!sbOn())return toast('Cloud not connected');var em=(document.getElementById('s_aem').value||'').trim(),pw=document.getElementById('s_apw').value||'';if(!em||!pw)return toast('Enter admin Gmail and password');toast('Connecting...');fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(res){if(!res.ok||!res.j.access_token){toast((res.j&&(res.j.msg||res.j.error_description))||'Login failed');return}ASESS={email:em,token:res.j.access_token,refresh:res.j.refresh_token||null,exp:Date.now()+((res.j.expires_in||3600)-60)*1000};try{store.set('dnw_asess',ASESS)}catch(e){}document.getElementById('s_apw').value='';adminCloudStatus(function(ok){ACLOUD=ok;if(ok){toast('Cloud connected \u2601\uFE0F');sbPush(false)}else{toast('This account is not an admin');ASESS=null;try{store.set('dnw_asess',null)}catch(e){}}render(false)})}).catch(function(){toast('Network error')})}
 function adminDisconnect(){ASESS=null;ACLOUD=null;try{store.set('dnw_asess',null)}catch(e){}toast('Admin cloud disconnected');render(false)}
 function validateAdmin(){if(!(ASESS&&ASESS.token))return;fetch(SB_URL+'/auth/v1/user',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+ASESS.token}}).then(function(r){if(!r.ok){ASESS=null;ACLOUD=null;try{store.set('dnw_asess',null)}catch(e){}}}).catch(function(){})}
-function logVisit(pg){if(!sbOn())return;try{var _ld=new Date().toISOString().slice(0,10);if(localStorage.getItem('dnw_vstc')===_ld)return;localStorage.setItem('dnw_vstc',_ld)}catch(e){}try{fetch(SB_URL+'/rest/v1/visits',{method:'POST',headers:sbH(),body:JSON.stringify({page:pg||'home',email:USER?USER.email:null,name:USER?USER.name:null,phone:(USER&&USER.phone)||null,ua:(navigator.userAgent||'').slice(0,120)})}).catch(function(){})}catch(e){}}
+function logVisit(pg){if(!sbOn())return;if(typeof ASESS!=='undefined'&&ASESS&&ASESS.token)return;try{var _ld=new Date().toISOString().slice(0,10);if(localStorage.getItem('dnw_vstc')===_ld)return;localStorage.setItem('dnw_vstc',_ld)}catch(e){}try{fetch(SB_URL+'/rest/v1/visits',{method:'POST',headers:sbH(),body:JSON.stringify({page:pg||'home',email:USER?USER.email:null,name:USER?USER.name:null,phone:(USER&&USER.phone)||null,ua:(navigator.userAgent||'').slice(0,120)})}).catch(function(){})}catch(e){}}
 function sbOrder(o){if(!sbOn())return null;var body={data:o};if(o.uid)body.user_id=o.uid;return fetch(SB_URL+'/rest/v1/orders',{method:'POST',headers:authHeaders(),body:JSON.stringify(body)}).then(function(r){if(!r.ok){var e=new Error('order save failed');if(r.status===409)e.dup=true;throw e}return r})}
 var WISH=store.get('dnw_wish',[]),USER=store.get('dnw_user',null),RECENT=store.get('dnw_recent',[]),ORDERS=store.get('dnw_orders',[]);try{var _v=store.get('dnw_visits')||{total:0,days:{}};var _vd=new Date().toISOString().slice(0,10);var _vs=null;try{_vs=localStorage.getItem('dnw_vst')}catch(e){}if(_vs!==_vd){_v.total++;_v.days[_vd]=(_v.days[_vd]||0)+1;store.set('dnw_visits',_v);try{localStorage.setItem('dnw_vst',_vd)}catch(e){}}}catch(e){}
 var inWish=function(id){return WISH.indexOf(id)>-1};
@@ -832,12 +843,12 @@ function render(an){
  document.body.classList.toggle('admview',view=='admin'&&EDIT);
  if(view=='admin'&&EDIT){
   document.title='Admin Panel - '+D.cfg.brand;
-  var m=$('#app');m.style.animation='none';void m.offsetWidth;m.style.animation='';
+  var m=$('#app');if(an){m.style.animation='none';void m.offsetWidth;m.style.animation=''};
   m.innerHTML=settingsHTML();tabs();if($('#avis'))loadVisits();if($('#aorders'))loadAdminOrders();if($('#dashWrap'))loadDashboard();if($('#apendrev'))loadPendRev();if($('#resWrap'))loadResellers();if($('#cloudstat'))refreshCloudStat();if(dirty)sbQueuePush();window.scrollTo({top:0});return;
  }
  $('#brand').innerHTML=brandHTML();
  document.title=D.cfg.brand+' Store';document.body.classList.toggle('edit',EDIT);
- var m=$('#app');m.style.animation='none';void m.offsetWidth;m.style.animation='';
+ var m=$('#app');if(an){m.style.animation='none';void m.offsetWidth;m.style.animation=''};
  m.innerHTML=noticeHTML()+(view=='home'?home():view=='shop'?shop():view=='search'?search():view=='saved'?saved():view=='me'?me():view=='orders'?orders():contact());
  if(view=='home'){$('#hg').innerHTML=grid(D.products.slice(0,4),an);typer();ntyper();carI=0;carInit();loadTick()}
  if(view=='shop'||view=='search'){var sg=$('#sg');if(sg)sg.innerHTML=grid(filtered(),an);if(view=='search'&&q)renderDrop()}
@@ -1026,28 +1037,47 @@ function dashInner(){
   if(DASHD.err)return h+'<p class="muted">'+esc(DASHD.err)+'</p>';
   if(!DASHD.data)return h+'<p class="muted">Loading…</p>';
   var d=DASHD.data;
-  var st=[['Total orders',d.orders_total||0,1],['Payment pending',d.payment_pending||0,1],['Payment paid',d.payment_paid||0,1],['Payment rejected',d.payment_rejected||0,1],['Delivered / key sent',d.delivery_delivered||0,1],['Not sent yet',d.delivery_not_sent||0,1],['Received ₹ (paid only)',money(d.revenue_inr||0,'INR'),0],['Received $ (paid only)',money(d.revenue_usd||0,'USD'),0],['Ordering customers (unique)',d.ordering_customers||0,1],['Visitors in range',d.visitors_total||0,1]];
-  h+='<div class="agrid">'+st.map(function(x,i){return'<div class="acard dash-card" style="animation-delay:'+(i*60)+'ms">'+(x[2]?'<b class="cnt" data-n="'+x[1]+'">0</b>':'<b>'+x[1]+'</b>')+'<small>'+x[0]+'</small></div>'}).join('')+'</div>';
-  var bm=d.by_method||{},mk=Object.keys(bm),mx=0;mk.forEach(function(k){if(bm[k]>mx)mx=bm[k]});
-  if(mk.length)h+='<h4>Orders by payment method</h4>'+mk.map(function(k){var w=mx?Math.round(bm[k]/mx*100):0;return'<div class="li"><span style="flex:1">'+esc(dashMethLabel(k))+'</span><span style="flex:2;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden"><span class="dash-bar" style="display:block;height:10px;width:'+w+'%;background:var(--violet)"></span></span><b>'+bm[k]+'</b></div>'}).join('');
   var pd=d.per_day||[];
-  var pdm=0;pd.forEach(function(r){if(r.n>pdm)pdm=r.n});
-  if(pd.length)h+='<h4>Orders, last 14 days</h4>'+pd.map(function(r){var w=pdm?Math.round(r.n/pdm*100):0;return'<div class="li"><span style="flex:1">'+esc(r.d)+'</span><span style="flex:2;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden"><span class="dash-bar" style="display:block;height:10px;width:'+w+'%;background:var(--violet)"></span></span><b>'+r.n+'</b></div>'}).join('');
+  var hero=[['Total orders',d.orders_total||0,1],['Payment paid',d.payment_paid||0,1],['Received ₹ (paid only)',money(d.revenue_inr||0,'INR'),0],['Received $ (paid only)',money(d.revenue_usd||0,'USD'),0]];
+  h+='<div class="dash-hero-grid">'+hero.map(function(x,i){var bars='';if(i===0&&pd.length){var pm=0;pd.forEach(function(r){if(r.n>pm)pm=r.n});bars='<div style="display:flex;gap:2px;align-items:flex-end;height:28px;margin-top:8px">'+pd.map(function(r){return'<span class="dash-minibar" style="flex:1;background:var(--violet);opacity:.85;height:'+(pm?Math.round(r.n/pm*100):0)+'%"></span>'}).join('')+'</div>'}return'<div class="acard dash-card dash-hero" style="animation-delay:'+(i*60)+'ms">'+(x[2]?'<b class="cnt" data-n="'+x[1]+'">0</b>':'<b>'+x[1]+'</b>')+'<small>'+x[0]+'</small>'+bars+'</div>'}).join('')+'</div>';
+  var sm=[['Payment pending',d.payment_pending||0],['Payment rejected',d.payment_rejected||0],['Delivered / key sent',d.delivery_delivered||0],['Not sent yet',d.delivery_not_sent||0],['Ordering customers (unique)',d.ordering_customers||0],['Visits in range',d.visitors_total||0]];
+  h+='<div class="agrid">'+sm.map(function(x,i){return'<div class="acard dash-card" style="animation-delay:'+(240+i*50)+'ms"><b class="cnt" data-n="'+x[1]+'">0</b><small>'+x[0]+'</small></div>'}).join('')+'</div>';
+  var bm=d.by_method||{},mk=Object.keys(bm),mx=0;mk.forEach(function(k){if(bm[k]>mx)mx=bm[k]});
+  var meth=mk.length?'<div class="dash-sec" style="flex:1;min-width:220px"><h4>Orders by payment method</h4>'+mk.map(function(k){var w=mx?Math.round(bm[k]/mx*100):0;return'<div class="li"><span style="flex:1">'+esc(dashMethLabel(k))+'</span><span style="flex:2;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden"><span class="dash-bar" style="display:block;height:10px;width:'+w+'%;background:var(--violet)"></span></span><b>'+bm[k]+'</b></div>'}).join('')+'</div>':'';
+  h+='<div class="row" style="flex-wrap:wrap;align-items:stretch"><div class="dash-sec" style="flex:2;min-width:280px"><h4>Orders, last 14 days</h4>'+dashChartSVG(pd)+'</div>'+meth+'</div>';
+
+  var ps=(typeof D!=='undefined'&&D.products)||[];
+  if(ps.length)h+='<div class="dash-sec"><h4>Products</h4>'+ps.map(function(p){var off=offerLive(p);return'<div class="li dash-row"><span style="flex:1"><b>'+esc(p.name)+'</b> <small class="muted">'+esc(p.cat||'')+'</small></span><span class="muted">'+(p.plans?p.plans.length:0)+' plans</span><b>'+money(effMin(p),pcur(p))+'</b>'+(off?'<span class="chip on">Offer live</span>':'')+'</div>'}).join('')+'</div>';
   var ro=d.recent_orders||[];
-  if(ro.length)h+='<h4>Recent orders</h4>'+ro.map(function(o){return'<div class="li dash-row" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(o.id)+'</b>'+dashPayBadge(o.pay_status)+'<span class="chip">'+esc(o.del_status)+'</span><b>'+money(o.total||0,o.cur||'INR')+'</b></div><small class="muted">'+esc((''+(o.created_at||'')).slice(0,16).replace('T',' '))+'</small></div>'}).join('');
+  if(ro.length)h+='<div class="dash-sec"><h4>Recent orders</h4>'+ro.map(function(o){return'<div class="li dash-row" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(o.id)+'</b>'+dashPayBadge(o.pay_status)+'<span class="chip">'+esc(o.del_status)+'</span><b>'+money(o.total||0,o.cur||'INR')+'</b></div><small class="muted">'+esc((''+(o.created_at||'')).slice(0,16).replace('T',' '))+'</small></div>'}).join('')+'</div>';
   h+='<p class="muted">Dashboard read-only hai — orders ya prices badalne ke liye Stats / Store wale sections use karo. Customers = sirf wo log jinhone order kiya hai; poori registered-users ginati server key ke bina nahi mil sakti, isliye yahan nahi dikhayi. Reseller numbers Stage 3 ke baad aayenge.</p>';
   return h;
 }
+function dashChartSVG(pd){
+  if(!pd||!pd.length)return'<p class="muted">No data yet.</p>';
+  var mx=0,sum=0;pd.forEach(function(r){if(r.n>mx)mx=r.n;sum+=r.n});
+  var W=600,H=220,pl=8,pr=8,pt=16,pb=26,iw=W-pl-pr,ih=H-pt-pb;
+  function X(i){return pl+(pd.length===1?iw/2:iw*i/(pd.length-1))}
+  function Y(n){return pt+ih-(mx?ih*n/mx:0)}
+  var line='M'+pd.map(function(r,i){return X(i).toFixed(1)+','+Y(r.n).toFixed(1)}).join(' L');
+  var area=line+' L'+(pl+iw).toFixed(1)+','+(pt+ih).toFixed(1)+' L'+pl.toFixed(1)+','+(pt+ih).toFixed(1)+' Z';
+  var avg=sum/pd.length,ay=Y(avg),step=Math.ceil(pd.length/8);
+  var labels=pd.map(function(r,i){if(i%step!==0&&i!==pd.length-1)return'';return'<text x="'+X(i).toFixed(1)+'" y="'+(H-8)+'" font-size="11" text-anchor="middle" style="fill:var(--muted)">'+esc((''+r.d).slice(0,10))+'</text>'}).join('');
+  var dots=pd.map(function(r,i){return'<circle class="dpt" data-d="'+esc(r.d)+'" data-n="'+r.n+'" cx="'+X(i).toFixed(1)+'" cy="'+Y(r.n).toFixed(1)+'" r="4.5" style="fill:#fff;stroke:var(--violet);stroke-width:2;cursor:pointer"/>'}).join('');
+  return'<div style="position:relative"><svg viewBox="0 0 600 220" style="width:100%;height:auto;display:block"><path d="'+area+'" style="fill:var(--violet);opacity:.12"/><line x1="'+pl+'" y1="'+ay.toFixed(1)+'" x2="'+(pl+iw).toFixed(1)+'" y2="'+ay.toFixed(1)+'" stroke-dasharray="4 4" style="stroke:var(--muted)"/><text x="'+(pl+iw).toFixed(1)+'" y="'+(ay-6).toFixed(1)+'" font-size="11" text-anchor="end" style="fill:var(--muted)">Avg '+avg.toFixed(1)+'</text><path class="dash-line" pathLength="1000" d="'+line+'" fill="none" style="stroke:var(--violet);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:drawLine 1.2s ease forwards"/>'+labels+dots+'</svg><div id="dashTip" style="display:none;position:absolute;pointer-events:none;background:#111;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px;z-index:5"></div></div>';
+}
+function dashChartTip(){var tip=$('#dashTip');if(!tip)return;var svg=tip.parentNode.querySelector('svg');if(!svg)return;svg.querySelectorAll('.dpt').forEach(function(c){function show(){tip.innerHTML='<b>'+c.dataset.n+'</b> orders<br><small class="muted">'+esc(c.dataset.d)+'</small>';tip.style.left=Math.min(88,Math.max(12,+c.getAttribute('cx')/600*100))+'%';tip.style.top=(+c.getAttribute('cy')/220*100)+'%';tip.style.transform='translate(-50%,-120%)';tip.style.display='block'}c.addEventListener('mouseenter',show);c.addEventListener('click',show);c.addEventListener('mouseleave',function(){tip.style.display='none'})})}
+function dashAfterRender(){var w=$('#dashWrap');if(!w)return;var hasCards=!!w.querySelector('.dash-card');if(hasCards&&!window.__dashAnimDone){window.__dashAnimDone=true;w.classList.remove('dash-done');animateDash()}else if(hasCards){w.classList.add('dash-done');w.querySelectorAll('.cnt').forEach(function(el){el.textContent=el.dataset.n})}dashChartTip()}
 function animateDash(){var w=$('#dashWrap');if(!w)return;w.querySelectorAll('.cnt').forEach(function(el){var t=+el.dataset.n||0;if(t<=0){el.textContent='0';return}var s=null;function step(ts){if(!s)s=ts;var p=Math.min(1,(ts-s)/700);el.textContent=Math.round(t*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(step)}requestAnimationFrame(step)})}
-function dashboardHTML(){return'<div id="dashWrap">'+dashInner()+'</div>'}
+function dashboardHTML(){return'<div id="dashWrap" class="dash-done">'+dashInner()+'</div>'}
 function loadDashboard(){
   var el=$('#dashWrap');if(!el)return;
   if(!sbOn()||!(ASESS&&ASESS.token)){el.innerHTML=dashInner();return}
   fetch(SB_URL+'/rest/v1/rpc/dashboard_stats',{method:'POST',headers:sbWH(),body:JSON.stringify({days:DASHD.days})}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(res){
     if(!res.ok||!res.j||res.j.code){DASHD.data=null;DASHD.err=(res.j&&res.j.code==='PGRST202')?'Dashboard function abhi database me nahi hai — final batch wali stage-2 SQL chalane ke baad dikhega.':((res.j&&res.j.message)||'Dashboard data nahi mila.');}
     else{DASHD.err='';DASHD.data=res.j}
-    var e2=$('#dashWrap');if(e2)e2.innerHTML=dashInner();animateDash();
-  }).catch(function(){DASHD.data=null;DASHD.err='Connection issue — dobara try karo';var e2=$('#dashWrap');if(e2)e2.innerHTML=dashInner();animateDash()});
+    var e2=$('#dashWrap');if(e2)e2.innerHTML=dashInner();dashAfterRender();
+  }).catch(function(){DASHD.data=null;DASHD.err='Connection issue — dobara try karo';var e2=$('#dashWrap');if(e2)e2.innerHTML=dashInner();dashAfterRender()});
 }
 /* ---------- ADMIN ANALYTICS ---------- */
 var VGROUPS=[];
