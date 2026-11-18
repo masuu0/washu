@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>DN WASHU Store</title>
-<link rel="icon" type="image/png" href="https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/intro/logo.png">
+<link rel="icon" type="image/webp" href="https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/favicon.png">
 <link rel="apple-touch-icon" sizes="180x180" href="https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/intro/logo.png">
 <meta name="description" content="DN WASHU Store — Pick your plan, order on WhatsApp or Telegram. Instant delivery, trusted support.">
 <meta property="og:title" content="DN WASHU Store">
@@ -454,7 +454,7 @@ if(D.cfg.cur=='\u20b9'||!D.cfg.cur)D.cfg.cur='INR';else if(D.cfg.cur=='$')D.cfg.
 D.products.forEach(function(p){if(!p.reviews)p.reviews=[];if(!p.plats)p.plats=p.plat?[p.plat]:[];if(p.setup==null)p.setup='';if(p.setupvideo==null)p.setupvideo='';(p.plans||[]).forEach(function(x){if(x.s==null)x.s=true})});
 var EDIT=false,ADMIN=false,dirty=false,view='home',tabPop=false,cat='All',q='',cur=null,sel=0,nm='',ph='',payStep=0,payMethod='',payUTR='',arm=null,TRC_BUSY=false,TRC_MSG='',TRC_OK=false,TRC_HINT=false,TRC_TS=0,TRCUSDT='TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',TRC_LIMIT=15*60*1000,tw,qT=null,carT=null,carI=0,sIdx=-1,authMode='login',RESET_TOK=null,AUTH_BUSY=false,revAll=false,pendingBuy=null,payRef='';
 var DNLOGO='https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/intro/dnlogo.png';
-var INTROLOGO='https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/intro/logo.png';
+var FAVICON='https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/favicon.png';
 var QRBADGE='https://bvraxclnqitibmrxswyt.supabase.co/storage/v1/object/public/media/intro/qrbadge.png';
 var PENDREV=null,REVFORM=false,REVSTARS=5;
 var GUEST={name:'',phone:''};try{var _gg=JSON.parse(localStorage.getItem('dnw_guest')||'null');if(_gg){GUEST.name=_gg.name||'';GUEST.phone=_gg.phone||''}}catch(e){}
@@ -464,7 +464,7 @@ function trcTickStop(){if(trcTickInt){clearInterval(trcTickInt);trcTickInt=null}
 function trcLeft(){return TRC_TS+TRC_LIMIT-Date.now()}
 function trcTickStart(){trcTickStop();trcTickInt=setInterval(function(){var e=document.getElementById('trct')||document.getElementById('trct2');if(!e){trcTickStop();return}var r=trcLeft();if(r<=0){trcTickStop();drawSheet();return}e.textContent=(e.getAttribute('data-pre')||'Time left ')+qrFmt(r)},1000)}
 function qrLogoSrc(){return DNLOGO}
-function setFav(){try{var l=document.querySelector('link[rel="icon"]');if(!l){l=document.createElement('link');l.rel='icon';l.type='image/png';document.head.appendChild(l)}if(l.getAttribute('href')!==INTROLOGO)l.setAttribute('href',INTROLOGO)}catch(e){}}
+function setFav(){try{var l=document.querySelector('link[rel="icon"]');if(!l){l=document.createElement('link');l.rel='icon';l.type='image/webp';document.head.appendChild(l)}if(l.getAttribute('href')!==FAVICON)l.setAttribute('href',FAVICON)}catch(e){}}
 function qrFmt(ms){ms=Math.max(0,ms);var sc=Math.ceil(ms/1000);return Math.floor(sc/60)+':'+('0'+(sc%60)).slice(-2)}
 function qrTickStop(){if(qrTickInt){clearInterval(qrTickInt);qrTickInt=null}}
 function qrTickStart(){qrTickStop();qrTickInt=setInterval(function(){var e=document.getElementById('qrt');if(!e){qrTickStop();return}var r=qrExp-Date.now();if(r<=0){qrTickStop();if(payStep==2&&payMethod=='upi')drawSheet();return}e.textContent='QR expires in '+qrFmt(r)},1000)}
@@ -526,7 +526,7 @@ var CH=[
 ];
 function CHvis(){return CH.filter(function(c){return c.id!='tg2'||(D.cfg.tg2||'').trim()})}
 function orderText(p,pl,n){if(!curOID)curOID=newOID();return['New order - '+D.cfg.brand,'Order ID: '+curOID,'Product: '+p.name,'Category: '+p.cat,'Plan: '+lab(pl.d,pl.u),'Price: '+money(effP(p,pl),effCur(p,pl))+((RESL&&RESL.is)?' (Reseller price)':(effP(p,pl)<pl.p?' (Offer '+offerPctFor(p,pl)+'% off)':'')),'Payment: '+payLabel(),'Name: '+((USER&&USER.name)||nm||GUEST.name||'-'),'Phone: '+(ph||'-')].concat((payUTR||payRef)?['Payment ref: '+(payUTR||payRef)]:[]).concat(TRC_HINT?['TRON: matching payment found (browser check only — manual confirmation pending)']:[]).join('\n')}
-function shareOrder(p,pl,nm){try{recordOrder('share',{name:p.name,plan:lab(pl.d,pl.u),price:effP(p,pl),product_id:p.id,plan_days:pl.d,plan_unit:pl.u||'d'},effP(p,pl),effCur(p,pl))}catch(e){}var txt=orderText(p,pl,nm);function fallback(){var wa=null;CHvis().forEach(function(c){if(!wa&&c.id=='wa')wa=c});if(!wa)wa=CHvis()[0];if(wa)window.open(wa.url(txt),'_blank','noopener')}try{if(navigator.share){navigator.share({title:'Order - '+(D.cfg.brand||'Store'),text:txt}).catch(function(){fallback()});return}}catch(e){}fallback()}
+function shareOrder(p,pl,nm){try{if(!ordDone)recordOrder('share',{name:p.name,plan:lab(pl.d,pl.u),price:effP(p,pl),product_id:p.id,plan_days:pl.d,plan_unit:pl.u||'d'},effP(p,pl),effCur(p,pl))}catch(e){}var txt=orderText(p,pl,nm);function fallback(){var wa=null;CHvis().forEach(function(c){if(!wa&&c.id=='wa')wa=c});if(!wa)wa=CHvis()[0];if(wa)window.open(wa.url(txt),'_blank','noopener')}try{if(navigator.share){navigator.share({title:'Order - '+(D.cfg.brand||'Store'),text:txt}).catch(function(){fallback()});return}}catch(e){}fallback()}
 function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t.h);t.h=setTimeout(function(){t.classList.remove('on')},2800)}
 var ce=function(k){return EDIT?' contenteditable="true" spellcheck="false" data-k="'+k+'"':''};
 
@@ -923,7 +923,7 @@ function toggleWish(id,el){
 /* ---------- PAY ---------- */
 var curOID=null,ordDone=false,ADMIN_ORDERS={};function newOID(){return 'D'+Date.now().toString(36).toUpperCase().slice(-6)}
 function autoRecord(){if(ordDone||!cur)return;recordOrder('auto',{name:cur.name,plan:lab(cur.plans[sel].d,cur.plans[sel].u),price:effP(cur,cur.plans[sel]),product_id:cur.id,plan_days:cur.plans[sel].d,plan_unit:cur.plans[sel].u||'d'},effP(cur,cur.plans[sel]),effCur(cur,cur.plans[sel]))}
-function recordOrder(ch,item,total,cur){var _o={id:(curOID=curOID||newOID()),st:'pending',ver:TRC_HINT?'tron-hint':'',ch:ch,items:[item],total:total,cur:cur||'INR',date:new Date().toLocaleString('en-IN'),pay:payMethod,utr:payUTR||'',phone:ph||'',uid:(USER&&USER.uid)||null,user:((USER&&USER.name)||(GUEST.name?('Guest '+GUEST.name):'Guest'))+' ('+(ph||'')+')'};ORDERS.push(_o);ordDone=true;try{var _pr=sbOrder(_o);if(_pr&&_pr.then)_pr.then(function(){try{fetch(SB_URL+'/functions/v1/telegram-bot/notify',{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({order_id:_o.id})}).catch(function(){})}catch(e){}});if(_pr&&_pr.catch)_pr.catch(function(e){if(e&&e.dup)toast('Ye UTR pehle use ho chuka hai \u2014 naya UTR daalo ya admin se sampark karo');else toast('Order cloud par save nahi hua \u2014 WhatsApp/Telegram se bheja order admin tak pahunchega')});CLOUD_ORDERS=null}catch(_){}TRC_BUSY=false;TRC_MSG='';TRC_OK=false;try{store.set('dnw_orders',ORDERS.slice(-30))}catch(e){try{store.set('dnw_orders',ORDERS.map(function(o){return{ch:o.ch,items:o.items,total:o.total,date:o.date,pay:o.pay,user:o.user}}).slice(-30))}catch(e2){}}}
+function recordOrder(ch,item,total,cur){var _o={id:(curOID=curOID||newOID()),st:'pending',ver:TRC_HINT?'tron-hint':'',ch:ch,items:[item],total:total,cur:cur||'INR',date:new Date().toLocaleString('en-IN'),pay:payMethod,utr:payUTR||'',phone:ph||'',uid:(USER&&USER.uid)||null,user:((USER&&USER.name)||(GUEST.name?('Guest '+GUEST.name):'Guest'))+' ('+(ph||'')+')'};ORDERS.push(_o);ordDone=true;try{var _pr=sbOrder(_o);if(_pr&&_pr.then)_pr.then(function(){try{fetch(SB_URL+'/functions/v1/telegram-bot/notify',{method:'POST',keepalive:true,headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({order_id:_o.id})}).catch(function(){})}catch(e){}});if(_pr&&_pr.catch)_pr.catch(function(e){if(e&&e.dup)toast('Ye UTR pehle use ho chuka hai \u2014 naya UTR daalo ya admin se sampark karo');else toast('Order cloud par save nahi hua \u2014 WhatsApp/Telegram se bheja order admin tak pahunchega')});CLOUD_ORDERS=null}catch(_){}TRC_BUSY=false;TRC_MSG='';TRC_OK=false;try{store.set('dnw_orders',ORDERS.slice(-30))}catch(e){try{store.set('dnw_orders',ORDERS.map(function(o){return{ch:o.ch,items:o.items,total:o.total,date:o.date,pay:o.pay,user:o.user}}).slice(-30))}catch(e2){}}}
 
 /* ---------- PRODUCT SHEET ---------- */
 var shPushed=false;function open_(){if(!shPushed){shPushed=true;try{history.pushState({dnwsh:1},'')}catch(e){}}OV.classList.add('open');document.body.style.overflow='hidden'}function close_(){qrTickStop();closeImgZoom();shPushed=false;OV.classList.remove('open');document.body.style.overflow=''}function back_(){if(shPushed){try{history.back();return}catch(e){}}close_()}window.addEventListener('popstate',function(){if(shPushed)close_()})
